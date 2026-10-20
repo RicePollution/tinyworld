@@ -42,6 +42,10 @@ def blocked(x, y, size=8):
 
 pygame.init()
 screen = pygame.display.set_mode((1024, 512))
+# change wall texture here
+wall_tex = pygame.image.load("wall_03_64.png").convert()
+TEX_W = wall_tex.get_width()
+TEX_H = wall_tex.get_height()
 clock = pygame.time.Clock()
 
 running = True
@@ -124,8 +128,12 @@ while running:
            hit_vertical = True
         else:
             side_shade = .8
-            hit_vertical = True
+            hit_vertical = False
 
+        if hit_vertical:
+            tex_col = int(((y % TILE)/TILE)*TEX_W)
+        else:
+            tex_col = int(((x % TILE)/TILE)*TEX_W)
 
         height = (screen_h * TILE) / max(dist,1)
         height = min(height, screen_h)
@@ -138,6 +146,10 @@ while running:
         wall_b = int(155 * brightness)
         wall_color = wall_r,wall_g,wall_b
         pygame.draw.rect(screen, wall_color, (512 + i, top, 1, height))
+
+        strip = wall_tex.subsurface((tex_col, 0, 1, TEX_H))
+        scaled = pygame.transform.scale(strip, (1, max(1, int(height))))
+        screen.blit(scaled, (512 + i, int(top)))
 
     pygame.display.flip()
     clock.tick(60)
