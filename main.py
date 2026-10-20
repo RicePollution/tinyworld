@@ -43,7 +43,7 @@ def blocked(x, y, size=8):
 pygame.init()
 screen = pygame.display.set_mode((1024, 512))
 # change wall texture here
-wall_tex = pygame.image.load("wall_03_64.png").convert()
+wall_tex = pygame.image.load("textures/wall_textures/wall_03_64.png").convert()
 TEX_W = wall_tex.get_width()
 TEX_H = wall_tex.get_height()
 clock = pygame.time.Clock()
