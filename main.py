@@ -93,6 +93,7 @@ while running:
     for i in range(ray_count):
         ray_a = player_a - fov/2 + fov * i/ray_count
 
+        side_shade = 0
         c = 0
         cos_a = cos(ray_a)
         sin_a = sin(ray_a)
@@ -102,7 +103,13 @@ while running:
             if is_wall(x, y):
                 break
             else:
-                c += 2
+                c += 1
+        prev_x = player_x + (c-1)*cos_a
+        prev_y = player_y + (c-1)*sin_a
+        if int(x / TILE) != int(prev_x / TILE):
+            side_shade = 1
+        else:
+            side_shade = .7
         if i % 8 == 0:
             pygame.draw.line(screen,(255,255,255),((player_x + 4),(player_y + 4)), (x,y))
         dist = c*cos(ray_a-player_a)
@@ -112,6 +119,7 @@ while running:
         top = (screen_h - height) / 2
         brightness = 1 - dist / view_dist
         brightness = max(0.2, min(1, brightness))
+        brightness = brightness * side_shade
         wall_r = int(255 * brightness)
         wall_g = int(155 * brightness)
         wall_b = int(155 * brightness)
