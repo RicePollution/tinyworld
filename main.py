@@ -7,6 +7,10 @@ player_x = 2.0 * TILE
 player_y = 1.5 * TILE
 player_a = 3
 fov = math.pi / 3
+ray_count = 512
+screen_h = 512
+view_dist = 500
+speed = 2
 
 game_map = [
     "1111111111111111",
@@ -47,24 +51,37 @@ while running:
             running = False
 
     keys = pygame.key.get_pressed()
+    cos_player = cos(player_a)
+    sin_player = sin(player_a)
+    dx = 0
+    dy = 0
     if keys[pygame.K_w]:
-        if not blocked(player_x, player_y - 2):
-            player_y -= 2
+        dx += speed * cos_player
+        dy += speed * sin_player
     if keys[pygame.K_s]:
-        if not blocked(player_x, player_y + 2):
-            player_y += 2
+        dx -= speed * cos_player
+        dy -= speed * sin_player
     if keys[pygame.K_a]:
-        if not blocked(player_x - 2, player_y):
-            player_x -= 2
+        dx -= speed * -sin_player
+        dy -= speed * cos_player
     if keys[pygame.K_d]:
-        if not blocked(player_x + 2, player_y):
-            player_x += 2
+        dx += speed * -sin_player
+        dy += speed * cos_player
+
+    if not blocked(dx + player_x, player_y):
+        player_x += dx
+    if not blocked(player_x, player_y + dy):
+        player_y += dy
+
     if keys[pygame.K_q]:
         player_a -= .03
     if keys[pygame.K_e]:
         player_a += .03
 
     screen.fill((0, 0, 0))
+
+    pygame.draw.rect(screen,(40,40,40),(512, 0, 512, 256))
+    pygame.draw.rect(screen,(100,100,110),(512, 256, 512, 256))
 
     for y, row in enumerate(game_map):
         for x, cell in enumerate(row):
@@ -73,21 +90,35 @@ while running:
 
     pygame.draw.rect(screen, (255, 255, 255), (player_x, player_y, 8, 8))
 
-    for i in range(512):
-        ray_a = player_a - fov/2 + fov * i/512
+    for i in range(ray_count):
+        ray_a = player_a - fov/2 + fov * i/ray_count
 
         c = 0
-        while c < 500:
-            x = player_x + c*cos(ray_a)
-            y = player_y + c*sin(ray_a)
+        cos_a = cos(ray_a)
+        sin_a = sin(ray_a)
+        while c < view_dist:
+            x = player_x + c*cos_a
+            y = player_y + c*sin_a
             if is_wall(x, y):
                 break
             else:
                 c += 2
-        pygame.draw.line(screen,(255,255,255),((player_x + 4),(player_y + 4)), (x,y))
+        if i % 8 == 0:
+            pygame.draw.line(screen,(255,255,255),((player_x + 4),(player_y + 4)), (x,y))
+        dist = c*cos(ray_a-player_a)
+
+        height = (screen_h * TILE) / max(dist,1)
+        height = min(height, screen_h)
+        top = (screen_h - height) / 2
+        brightness = 1 - dist / view_dist
+        brightness = max(0.2, min(1, brightness))
+        wall_r = int(255 * brightness)
+        wall_g = int(155 * brightness)
+        wall_b = int(155 * brightness)
+        wall_color = wall_r,wall_g,wall_b
+        pygame.draw.rect(screen, wall_color, (512 + i, top, 1, height))
 
     pygame.display.flip()
     clock.tick(60)
-    print(clock.get_fps())
-
+    pygame.display.set_caption(f"FPS: {clock.get_fps():.0f}")
 pygame.quit()
