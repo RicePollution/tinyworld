@@ -12,6 +12,8 @@ screen_h = 512
 view_dist = 500
 speed = 2
 
+wall_path = "textures/wall_textures/wall_01_64.png"
+
 game_map = [
     "1111111111111111",
     "1000101000001001",
@@ -43,7 +45,7 @@ def blocked(x, y, size=8):
 pygame.init()
 screen = pygame.display.set_mode((1024, 512))
 # change wall texture here
-wall_tex = pygame.image.load("textures/wall_textures/wall_03_64.png").convert()
+wall_tex = pygame.image.load(wall_path).convert()
 TEX_W = wall_tex.get_width()
 TEX_H = wall_tex.get_height()
 clock = pygame.time.Clock()
@@ -81,6 +83,17 @@ while running:
         player_a -= .03
     if keys[pygame.K_e]:
         player_a += .03
+
+    if keys[pygame.K_1]:
+        wall_path = "textures/wall_textures/wall_01_64.png"
+        wall_tex = pygame.image.load(wall_path).convert()
+    if keys[pygame.K_2]:
+        wall_path = "textures/wall_textures/wall_02_64.png"
+        wall_tex = pygame.image.load(wall_path).convert()
+    if keys[pygame.K_3]:
+        wall_path = "textures/wall_textures/wall_03_64.png"
+        wall_tex = pygame.image.load(wall_path).convert()
+
 
     screen.fill((0, 0, 0))
 
