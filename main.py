@@ -136,19 +136,20 @@ while running:
             tex_col = int(((x % TILE)/TILE)*TEX_W)
 
         height = (screen_h * TILE) / max(dist,1)
+        true_height = height
         height = min(height, screen_h)
         top = (screen_h - height) / 2
         brightness = 1 - dist / view_dist
         brightness = max(0.2, min(1, brightness))
         brightness = brightness * side_shade
-        wall_r = int(255 * brightness)
-        wall_g = int(155 * brightness)
-        wall_b = int(155 * brightness)
-        wall_color = wall_r,wall_g,wall_b
-        pygame.draw.rect(screen, wall_color, (512 + i, top, 1, height))
 
-        strip = wall_tex.subsurface((tex_col, 0, 1, TEX_H))
+        visible_fraction = height / true_height
+
+
+        strip = wall_tex.subsurface((tex_col, (TEX_H * (1 - visible_fraction) / 2), 1, TEX_H * visible_fraction))
         scaled = pygame.transform.scale(strip, (1, max(1, int(height))))
+        v = int(255 * brightness)
+        scaled.fill((v,v,v), special_flags=pygame.BLEND_MULT)
         screen.blit(scaled, (512 + i, int(top)))
 
     pygame.display.flip()
