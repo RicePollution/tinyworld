@@ -47,7 +47,10 @@ All textures are located in the textures directory
 
 # Other thoughts
 **Fish Eye Correction**  
-Another intresting thing I thought was the fisheye correction. Its very simple yet very intuitive
+Another intresting thing I thought was the fisheye correction.  
+Its very simple yet very intuitive  
+![img.png](img.png)  
+(image from tinyraycaster wiki)
 
     dist = c*cos(ray_a-player_a)
 
