@@ -1,5 +1,6 @@
 import pygame
 import math
+import numpy as np
 from math import cos, sin
 
 TILE = 32
@@ -32,10 +33,12 @@ game_map = [
     "1011100000000001",
     "1111111111111111",
 ]
-
+# collsion helpers
+# checks if that point its hitting is a wall
 def is_wall(x, y):
     return game_map[int(y / TILE)][int(x / TILE)] == "1"
 
+# checks if the spot that the player will be with inputs will be a wall
 def blocked(x, y, size=8):
     return (is_wall(x, y) or
             is_wall(x + size - 1, y) or
@@ -46,6 +49,7 @@ pygame.init()
 screen = pygame.display.set_mode((1024, 512))
 # change wall texture here
 wall_tex = pygame.image.load(wall_path).convert()
+# texture dimensions for calcs
 TEX_W = wall_tex.get_width()
 TEX_H = wall_tex.get_height()
 clock = pygame.time.Clock()
@@ -56,6 +60,7 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
+    # movement stuff and turns
     keys = pygame.key.get_pressed()
     cos_player = cos(player_a)
     sin_player = sin(player_a)
@@ -74,16 +79,19 @@ while running:
         dx += speed * -sin_player
         dy += speed * cos_player
 
+    # apply movements if not blocked
     if not blocked(dx + player_x, player_y):
         player_x += dx
     if not blocked(player_x, player_y + dy):
         player_y += dy
 
+    # actual turn
     if keys[pygame.K_q]:
         player_a -= .03
     if keys[pygame.K_e]:
         player_a += .03
 
+    # change wall tex
     if keys[pygame.K_1]:
         wall_path = "textures/wall_textures/wall_01_64.png"
         wall_tex = pygame.image.load(wall_path).convert()
@@ -95,40 +103,57 @@ while running:
         wall_tex = pygame.image.load(wall_path).convert()
 
 
+    # Set background to black
     screen.fill((0, 0, 0))
 
+    # Set top and bottom greys
     pygame.draw.rect(screen,(40,40,40),(512, 0, 512, 256))
     pygame.draw.rect(screen,(100,100,110),(512, 256, 512, 256))
 
+
+    # make map based off of map
     for y, row in enumerate(game_map):
         for x, cell in enumerate(row):
             if cell == "1":
                 pygame.draw.rect(screen, (255, 155, 155), (x * TILE, y * TILE, TILE, TILE))
 
+    # draw square where player cordinates are
     pygame.draw.rect(screen, (255, 255, 255), (player_x, player_y, 8, 8))
 
+    # loops through every ray depending on ray amount (512)
     for i in range(ray_count):
+        # takes player facing direction then goes half of fov to the right then other half on the right
         ray_a = player_a - fov/2 + fov * i/ray_count
 
+        # c is ray length until it hits wall
         c = 0
+        # cos and sin of the ray/vector
         cos_a = cos(ray_a)
         sin_a = sin(ray_a)
+        # draws the ray/vector until it hits a wall and gives x and y
         while c < view_dist:
             x = player_x + c*cos_a
             y = player_y + c*sin_a
             if is_wall(x, y):
                 break
             else:
+                # steps how far to check
+                # will loop until it hits wall
                 c += 1
+        # gets the prev x and y of the ray
         prev_x = player_x + (c-1)*cos_a
         prev_y = player_y + (c-1)*sin_a
+        # draws line for visualization every 8 rays to not make it messy
         if i % 8 == 0:
             pygame.draw.line(screen,(255,255,255),((player_x + 4),(player_y + 4)), (x,y))
         dist = c*cos(ray_a-player_a)
 
+        # figures out where along the wall the ray hit
         col_changed = int(x / TILE) != int(prev_x / TILE)
         row_changed = int(y / TILE) != int(prev_y / TILE)
 
+
+        # shades strip depending on where it hit
         if col_changed and row_changed:
             if is_wall(x, prev_y):
                 side_shade = 1
@@ -143,29 +168,43 @@ while running:
             side_shade = .8
             hit_vertical = False
 
+        # this tells which column of the texture to strip
         if hit_vertical:
             tex_col = int(((y % TILE)/TILE)*TEX_W)
         else:
             tex_col = int(((x % TILE)/TILE)*TEX_W)
 
+        # how tall the strip should be
         height = (screen_h * TILE) / max(dist,1)
+        # saves height before modification helps for the visible fraction
         true_height = height
+        # clamps the height so it doesn't draw past the screen height
         height = min(height, screen_h)
         top = (screen_h - height) / 2
+        # brightness math
         brightness = 1 - dist / view_dist
         brightness = max(0.2, min(1, brightness))
         brightness = brightness * side_shade
 
+        # crops the texture for up close correction
         visible_fraction = height / true_height
 
-
+        # crazy math
+        # takes a cut of the texture depending on where it hit
         strip = wall_tex.subsurface((tex_col, (TEX_H * (1 - visible_fraction) / 2), 1, TEX_H * visible_fraction))
+        # scales it to the right height based off of the height variable with fish eye correction
         scaled = pygame.transform.scale(strip, (1, max(1, int(height))))
+        # applys a shadding change over depending on how far/shading stuff above
         v = int(255 * brightness)
+        # blends the shaded color over the texture
         scaled.fill((v,v,v), special_flags=pygame.BLEND_MULT)
+        # last part, it draws it
         screen.blit(scaled, (512 + i, int(top)))
 
+    # draws everything on the screen
     pygame.display.flip()
+    #runs 60 fps
     clock.tick(60)
+    # logs current fps in the windows caption
     pygame.display.set_caption(f"FPS: {clock.get_fps():.0f}")
 pygame.quit()
